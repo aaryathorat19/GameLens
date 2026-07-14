@@ -1,10 +1,16 @@
-"""Streamlit entry point for MatchVision AI."""
+"""Streamlit entry point for GameLens."""
 
 from pathlib import Path
 
 import streamlit as st
 
 from config import APP_TAGLINE, APP_TITLE, ensure_directories
+from modules.audio_highlights import AudioAnalysisError, detect_audio_candidates
+from modules.scene_refinement import (
+    SceneDetectionError,
+    detect_scene_windows,
+    refine_candidates_with_scenes,
+)
 from modules.video_upload import UploadValidationError, save_uploaded_video
 from services.audio_extractor import AudioExtractionError, extract_audio, ffmpeg_available
 
@@ -15,7 +21,7 @@ def main() -> None:
 
     st.title(APP_TITLE)
     st.caption(APP_TAGLINE)
-    st.info("Phase 2: upload a match recording and prepare its audio track.")
+    st.info("Phase 4: refine high-energy moments to clean video-scene boundaries.")
 
     uploaded_video = st.file_uploader("Upload a match recording (MP4)", type=["mp4"])
     if uploaded_video is None:
@@ -40,12 +46,66 @@ def main() -> None:
     if source_audio and Path(source_audio).is_file():
         st.subheader("Extracted match audio")
         st.audio(source_audio)
+        if st.button("Detect highlight candidates"):
+            try:
+                with st.spinner("Analyzing crowd and commentary energy..."):
+                    candidates = detect_audio_candidates(Path(source_audio))
+                st.session_state["highlight_candidates"] = candidates
+            except AudioAnalysisError as error:
+                st.error(str(error))
+
+    candidates = st.session_state.get("highlight_candidates", [])
+    if candidates:
+        st.subheader("Candidate highlight moments")
+        st.caption("Higher score means louder audio relative to this match.")
+        st.dataframe(
+            [
+                {
+                    "Start (s)": round(candidate.start_seconds, 1),
+                    "End (s)": round(candidate.end_seconds, 1),
+                    "Duration (s)": round(candidate.duration_seconds, 1),
+                    "Audio score": round(candidate.score, 2),
+                }
+                for candidate in candidates
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    source_video = st.session_state.get("source_video")
+    if candidates and source_video and Path(source_video).is_file():
+        if st.button("Refine candidates with scene detection"):
+            try:
+                with st.spinner("Detecting video scene boundaries..."):
+                    scenes = detect_scene_windows(Path(source_video))
+                    refined = refine_candidates_with_scenes(candidates, scenes)
+                st.session_state["refined_candidates"] = refined
+                st.success(f"Aligned {len(refined)} candidate clips using {len(scenes)} detected scenes.")
+            except SceneDetectionError as error:
+                st.error(str(error))
+
+    refined_candidates = st.session_state.get("refined_candidates", [])
+    if refined_candidates:
+        st.subheader("Scene-refined clip windows")
+        st.dataframe(
+            [
+                {
+                    "Start (s)": round(candidate.start_seconds, 1),
+                    "End (s)": round(candidate.end_seconds, 1),
+                    "Duration (s)": round(candidate.duration_seconds, 1),
+                    "Audio score": round(candidate.score, 2),
+                }
+                for candidate in refined_candidates
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
 
     st.subheader("How it will work")
     st.markdown(
         "1. Upload a full match recording.\n"
-        "2. Prepare its audio track.\n"
-        "3. Detect exciting moments and generate highlights in the next phases."
+        "2. Prepare its audio track, rank high-energy moments, and align them to scenes.\n"
+        "3. Generate a highlight video in the next phase."
     )
 
 

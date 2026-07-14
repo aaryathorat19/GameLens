@@ -4,10 +4,10 @@ Each row is one reviewable commit. Do not combine milestones without an explicit
 
 | # | Commit | Deliverable |
 | --- | --- | --- |
-| 1 | `chore: bootstrap MatchVision application` | Structure, config, dependencies, Streamlit shell. Done. |
+| 1 | `chore: bootstrap GameLens application` | Structure, config, dependencies, Streamlit shell. Done. |
 | 2 | `feat: add video upload and audio extraction` | MP4 validation/storage and FFmpeg WAV extraction. Done. |
-| 3 | `feat: detect audio highlight candidates` | Energy/loudness analysis and tested timestamp candidates. |
-| 4 | `feat: refine candidates with scene detection` | PySceneDetect boundaries and clip-window selection. |
+| 3 | `feat: detect audio highlight candidates` | Energy/loudness analysis and tested timestamp candidates. Done. |
+| 4 | `feat: refine candidates with scene detection` | PySceneDetect boundaries and clip-window selection. Done. |
 | 5 | `feat: generate downloadable highlight video` | Clip extraction, merge, progress/error UI, output artifact. |
 | 6 | `feat: add highlight controls and preview` | Length profiles, filters, confidence, player/download. |
 | 7 | `feat: add match statistics dashboard` | Provider interface, stats cards, event timeline. |

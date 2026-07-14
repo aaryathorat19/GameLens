@@ -3,13 +3,12 @@
 ## System
 
 ```text
-Streamlit browser UI -> app.main() -> modules.video_upload.save_uploaded_video()
-                                     -> input/match_<uuid>.mp4
-                                     -> services.audio_extractor.extract_audio()
-                                     -> output/match_<uuid>_audio.wav
+Streamlit browser UI -> upload -> WAV -> audio candidate ranges
+                            -> modules.scene_refinement.detect_scene_windows()
+                            -> scene-aligned, merged clip windows
 ```
 
-`app.py` renders the upload workflow and keeps source paths in Streamlit session state. `modules/video_upload.py` validates MP4 uploads and assigns generated names. `services/audio_extractor.py` calls FFmpeg to make mono 16 kHz WAV audio. `config.py` derives all paths from its own file location; no environment variables, network calls, database, users, routes, or background workers exist.
+`app.py` renders upload, audio analysis, and scene refinement workflows and keeps paths/results in Streamlit session state. `modules/audio_highlights.py` reads PCM WAV audio, computes RMS energy windows, keeps top-percentile contiguous regions, and ranks them by peak relative energy. `modules/scene_refinement.py` detects content scenes via PySceneDetect, expands candidates to overlapping scene windows, then merges overlaps. `modules/video_upload.py` validates MP4 uploads and assigns generated names. `services/audio_extractor.py` calls FFmpeg to make mono 16 kHz WAV audio. `config.py` derives all paths from its own file location; no environment variables, network calls, database, users, routes, or background workers exist.
 
 ## Directory map
 
@@ -18,6 +17,8 @@ Streamlit browser UI -> app.main() -> modules.video_upload.save_uploaded_video()
 | `app.py` | Streamlit entry point and UI composition. |
 | `config.py` | Project paths, UI identity, runtime-directory creation. |
 | `modules/video_upload.py` | MP4 validation and safe server-side upload storage. |
+| `modules/audio_highlights.py` | RMS audio-energy candidate detection and scores. |
+| `modules/scene_refinement.py` | PySceneDetect scene windows and candidate alignment. |
 | `services/audio_extractor.py` | FFmpeg preflight and WAV extraction. |
 | `utils/` | Reserved for shared helpers. |
 | `input/` | User source videos at runtime; ignored by Git. |
@@ -37,7 +38,7 @@ Streamlit browser UI -> app.main() -> modules.video_upload.save_uploaded_video()
 
 ## Data and request flow
 
-No request/API/database flow exists. Current pipeline: MP4 upload -> persisted input -> extracted WAV. Intended continuation: candidates -> scene refinement -> clips -> `Highlights.mp4` -> dashboard/download.
+No request/API/database flow exists. Current pipeline: MP4 upload -> persisted input -> WAV -> ranked audio candidates -> scene-aligned clip windows. Intended continuation: clip extraction -> `Highlights.mp4` -> dashboard/download.
 
 ## Security and performance
 
