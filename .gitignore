@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Application data - keep the directory structure, not user videos/results
+input/*
+!input/.gitkeep
+output/*
+!output/.gitkeep
+
+# Local secrets
+.env
