@@ -1,12 +1,14 @@
 """Streamlit entry point for GameLens."""
 
 from pathlib import Path
+import os
 
 import streamlit as st
 
 from config import APP_TAGLINE, APP_TITLE, ensure_directories
 from modules.audio_highlights import AudioAnalysisError, detect_audio_candidates
 from modules.highlight_selection import PROFILES, select_candidates, total_duration
+from modules.match_stats import format_optional, scoreline
 from modules.scene_refinement import (
     SceneDetectionError,
     detect_scene_windows,
@@ -15,6 +17,7 @@ from modules.scene_refinement import (
 from modules.video_upload import UploadValidationError, save_uploaded_video
 from services.audio_extractor import AudioExtractionError, extract_audio, ffmpeg_available
 from services.highlight_renderer import HighlightRenderError, render_highlights
+from services.stats_provider import StatsProviderError, get_stats_provider
 
 
 def main() -> None:
@@ -23,7 +26,7 @@ def main() -> None:
 
     st.title(APP_TITLE)
     st.caption(APP_TAGLINE)
-    st.info("Phase 6: choose a focused highlight length before rendering.")
+    st.info("Phase 7: browse match statistics alongside generated highlights.")
 
     uploaded_video = st.file_uploader("Upload a match recording (MP4)", type=["mp4"])
     if uploaded_video is None:
@@ -152,12 +155,87 @@ def main() -> None:
                 mime="video/mp4",
             )
 
+    _render_match_statistics()
+
     st.subheader("How it will work")
     st.markdown(
         "1. Upload a full match recording.\n"
         "2. Rank and align high-energy moments, then apply a length/confidence budget.\n"
-        "3. Render only the selected clips, then preview and download Highlights.mp4."
+        "3. Render only the selected clips, then preview and download Highlights.mp4.\n"
+        "4. Load match statistics for context while you review the highlights."
     )
+
+
+def _render_match_statistics() -> None:
+    st.subheader("Match statistics")
+    api_configured = bool(os.getenv("API_FOOTBALL_KEY", "").strip())
+    if api_configured:
+        st.caption("Live API-Football access is configured via `.env`.")
+    else:
+        st.caption(
+            "Use the demo fixture offline, or set API_FOOTBALL_KEY in `.env` for live fixture IDs."
+        )
+    source = st.radio(
+        "Statistics source",
+        ("Demo match", "Live API"),
+        horizontal=True,
+        index=1 if api_configured else 0,
+    )
+    match_id = st.text_input(
+        "Fixture ID",
+        value="demo" if source == "Demo match" else "",
+        placeholder="API-Football numeric fixture ID",
+        help="Demo accepts 'demo'. Live mode needs a numeric fixture ID from API-Football.",
+    )
+    if st.button("Load match statistics"):
+        try:
+            provider = get_stats_provider(prefer_live=source == "Live API")
+            with st.spinner(f"Loading statistics from {provider.name}..."):
+                stats = provider.get_match(match_id or "demo")
+            st.session_state["match_statistics"] = stats
+        except StatsProviderError as error:
+            st.error(str(error))
+
+    stats = st.session_state.get("match_statistics")
+    if not stats:
+        return
+
+    st.markdown(
+        f"**{stats.home.name}** {scoreline(stats)} **{stats.away.name}**  \n"
+        f"{stats.competition} · {stats.status} · {stats.kickoff_utc} · via {stats.provider_name}"
+    )
+
+    home_col, away_col = st.columns(2)
+    for column, team in ((home_col, stats.home), (away_col, stats.away)):
+        with column:
+            st.markdown(f"##### {team.name}")
+            metric_cols = st.columns(3)
+            metric_cols[0].metric("Possession", format_optional(team.possession_pct, suffix="%"))
+            metric_cols[1].metric("Shots", format_optional(team.shots))
+            metric_cols[2].metric("On target", format_optional(team.shots_on_target))
+            detail_cols = st.columns(3)
+            detail_cols[0].metric("Corners", format_optional(team.corners))
+            detail_cols[1].metric("Yellow", format_optional(team.yellow_cards))
+            detail_cols[2].metric("Red", format_optional(team.red_cards))
+
+    st.markdown("##### Event timeline")
+    if not stats.events:
+        st.caption("No timeline events were returned for this match.")
+    else:
+        st.dataframe(
+            [
+                {
+                    "Minute": event.minute,
+                    "Event": event.event_type,
+                    "Team": event.team,
+                    "Player": event.player,
+                    "Detail": event.detail,
+                }
+                for event in stats.events
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
 
 
 if __name__ == "__main__":

@@ -19,4 +19,4 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Entry point: `app.py`. Configuration root: `config.py`. Current state: Phase 1 foundation only; no video, API, database, authentication, or AI pipeline is implemented yet.
+Entry point: `app.py`. Configuration root: `config.py`. Current state: highlight pipeline through Phase 6 controls plus Phase 7 match statistics dashboard (demo or API-Football).

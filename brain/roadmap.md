@@ -10,7 +10,7 @@ Each row is one reviewable commit. Do not combine milestones without an explicit
 | 4 | `feat: refine candidates with scene detection` | PySceneDetect boundaries and clip-window selection. Done. |
 | 5 | `feat: generate downloadable highlight video` | Clip extraction, merge, progress/error UI, output artifact. Done. |
 | 6 | `feat: add highlight controls and preview` | Length profiles, confidence, player/download, and budgeted rendering. Done. |
-| 7 | `feat: add match statistics dashboard` | Provider interface, stats cards, event timeline. |
+| 7 | `feat: add match statistics dashboard` | Provider interface, stats cards, event timeline. Done. |
 | 8 | `feat: generate AI match summaries` | Summary service and safe failure/config states. |
 | 9 | `feat: add scoreboard OCR and replay detection` | Optional advanced-analysis services. |
 | 10 | `feat: add player and ball tracking analytics` | YOLO/tracking/formation/heatmap/pass-network capabilities. |

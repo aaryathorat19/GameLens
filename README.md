@@ -4,7 +4,7 @@ An AI-powered football highlight generator and match analyzer. Upload a full mat
 
 ## Current status
 
-The project foundation is in place. The next milestone adds video upload and audio extraction.
+Highlights pipeline and match statistics dashboard are in place. Next milestone: AI match summaries.
 
 ## Run locally
 
@@ -16,6 +16,8 @@ streamlit run app.py
 ```
 
 FFmpeg must also be installed and available on your `PATH` before video-processing milestones can run.
+
+Optional live statistics: copy `.env.example` to `.env` and set `API_FOOTBALL_KEY` to your [API-Football](https://dashboard.api-football.com/) key. Without it, the dashboard serves a built-in demo fixture.
 
 ## Commit roadmap
 
