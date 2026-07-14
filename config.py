@@ -1,4 +1,4 @@
-"""Central configuration for MatchVision AI."""
+"""Central configuration for GameLens."""
 
 from pathlib import Path
 
@@ -8,7 +8,7 @@ INPUT_DIR = PROJECT_ROOT / "input"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 ASSETS_DIR = PROJECT_ROOT / "assets"
 
-APP_TITLE = "MatchVision AI"
+APP_TITLE = "GameLens"
 APP_TAGLINE = "AI Football Highlight Generator & Match Analyzer"
 MAX_UPLOAD_SIZE_MB = 500
 

@@ -1,4 +1,4 @@
-# MatchVision AI - Brain
+# GameLens - Brain
 
 Purpose: compact, implementation-grounded context for future contributors and agents. Update only affected files when code changes.
 

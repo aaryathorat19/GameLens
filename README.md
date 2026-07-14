@@ -1,4 +1,4 @@
-# MatchVision AI
+# GameLens
 
 An AI-powered football highlight generator and match analyzer. Upload a full match recording and turn it into a longer, customizable highlight experience.
 
@@ -19,7 +19,7 @@ FFmpeg must also be installed and available on your `PATH` before video-processi
 
 ## Commit roadmap
 
-1. **chore: bootstrap MatchVision application** - structure, configuration, dependencies, and Streamlit shell.
+1. **chore: bootstrap GameLens application** - structure, configuration, dependencies, and Streamlit shell.
 2. **feat: add video upload and audio extraction** - validate MP4 uploads, persist the source video, extract WAV with FFmpeg.
 3. **feat: detect audio highlight candidates** - loudness/energy analysis, candidate timestamps, and tests.
 4. **feat: refine candidates with scene detection** - PySceneDetect boundaries and clip windows.

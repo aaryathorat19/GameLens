@@ -1,1 +1,1 @@
-"""Test package for MatchVision AI."""
+"""Test package for GameLens."""
