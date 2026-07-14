@@ -4,11 +4,12 @@
 
 ```text
 Streamlit browser UI -> upload -> WAV -> audio candidates -> scene-aligned windows
+                            -> modules.highlight_selection.select_candidates()
                             -> services.highlight_renderer.render_highlights()
                             -> output/Highlights.mp4 -> player/download
 ```
 
-`app.py` renders the pipeline and keeps paths/results in Streamlit session state. `modules/audio_highlights.py` computes RMS-energy candidates; `modules/scene_refinement.py` aligns and merges them with PySceneDetect scenes. `services/highlight_renderer.py` re-encodes each window with FFmpeg, concatenates normalized clips, and writes `output/Highlights.mp4`. `modules/video_upload.py` validates MP4 uploads and assigns generated names. `services/audio_extractor.py` makes mono 16 kHz WAV audio. No environment variables, network calls, database, users, routes, or background workers exist.
+`app.py` renders the pipeline and keeps paths/results in Streamlit session state. `modules/audio_highlights.py` computes RMS-energy candidates; `modules/scene_refinement.py` aligns and merges them with PySceneDetect scenes. `modules/highlight_selection.py` applies Short/Medium/Extended duration budgets and a confidence threshold before rendering, reducing FFmpeg work. `services/highlight_renderer.py` re-encodes selected windows, concatenates normalized clips, and writes `output/Highlights.mp4`. No environment variables, network calls, database, users, routes, or background workers exist.
 
 ## Directory map
 
@@ -19,6 +20,7 @@ Streamlit browser UI -> upload -> WAV -> audio candidates -> scene-aligned windo
 | `modules/video_upload.py` | MP4 validation and safe server-side upload storage. |
 | `modules/audio_highlights.py` | RMS audio-energy candidate detection and scores. |
 | `modules/scene_refinement.py` | PySceneDetect scene windows and candidate alignment. |
+| `modules/highlight_selection.py` | Confidence and duration-budget clip selection. |
 | `services/audio_extractor.py` | FFmpeg preflight and WAV extraction. |
 | `services/highlight_renderer.py` | FFmpeg clip extraction and `Highlights.mp4` rendering. |
 | `utils/` | Reserved for shared helpers. |
@@ -39,7 +41,7 @@ Streamlit browser UI -> upload -> WAV -> audio candidates -> scene-aligned windo
 
 ## Data and request flow
 
-No request/API/database flow exists. Current pipeline: MP4 upload -> persisted input -> WAV -> audio candidates -> scene windows -> clips -> `Highlights.mp4` -> player/download. Intended continuation: user controls and match statistics.
+No request/API/database flow exists. Current pipeline: MP4 upload -> persisted input -> WAV -> audio candidates -> scene windows -> budgeted clips -> `Highlights.mp4` -> player/download. Intended continuation: match statistics.
 
 ## Security and performance
 

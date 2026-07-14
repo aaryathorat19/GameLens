@@ -6,6 +6,7 @@ import streamlit as st
 
 from config import APP_TAGLINE, APP_TITLE, ensure_directories
 from modules.audio_highlights import AudioAnalysisError, detect_audio_candidates
+from modules.highlight_selection import PROFILES, select_candidates, total_duration
 from modules.scene_refinement import (
     SceneDetectionError,
     detect_scene_windows,
@@ -22,7 +23,7 @@ def main() -> None:
 
     st.title(APP_TITLE)
     st.caption(APP_TAGLINE)
-    st.info("Phase 5: generate a downloadable highlight video from refined match moments.")
+    st.info("Phase 6: choose a focused highlight length before rendering.")
 
     uploaded_video = st.file_uploader("Upload a match recording (MP4)", type=["mp4"])
     if uploaded_video is None:
@@ -101,8 +102,29 @@ def main() -> None:
             use_container_width=True,
             hide_index=True,
         )
+        controls_left, controls_right = st.columns(2)
+        with controls_left:
+            profile_name = st.radio(
+                "Highlight length", list(PROFILES), horizontal=True, index=1
+            )
+        with controls_right:
+            minimum_confidence = st.slider(
+                "Minimum audio confidence", min_value=0.0, max_value=1.0, value=0.5, step=0.05
+            )
+
+        selected_candidates = select_candidates(
+            refined_candidates, PROFILES[profile_name], minimum_confidence
+        )
+        selected_duration = total_duration(selected_candidates)
+        st.caption(
+            f"{len(selected_candidates)} clips selected - {selected_duration:.0f}s of "
+            f"{PROFILES[profile_name].max_duration_seconds:.0f}s available. "
+            "Only selected clips are sent to FFmpeg."
+        )
+        if not selected_candidates:
+            st.warning("No clips meet this confidence threshold. Lower it to generate highlights.")
         if source_video and Path(source_video).is_file():
-            if st.button("Generate Highlights.mp4", type="primary"):
+            if st.button("Generate Highlights.mp4", type="primary", disabled=not selected_candidates):
                 progress = st.progress(0, text="Preparing highlight clips...")
 
                 def update_progress(completed: int, total: int) -> None:
@@ -110,7 +132,7 @@ def main() -> None:
 
                 try:
                     output_path = render_highlights(
-                        Path(source_video), refined_candidates, progress_callback=update_progress
+                        Path(source_video), selected_candidates, progress_callback=update_progress
                     )
                     st.session_state["highlight_video"] = str(output_path)
                     progress.progress(1.0, text="Highlights.mp4 is ready.")
@@ -133,8 +155,8 @@ def main() -> None:
     st.subheader("How it will work")
     st.markdown(
         "1. Upload a full match recording.\n"
-        "2. Prepare its audio track, rank high-energy moments, and align them to scenes.\n"
-        "3. Generate, preview, and download Highlights.mp4."
+        "2. Rank and align high-energy moments, then apply a length/confidence budget.\n"
+        "3. Render only the selected clips, then preview and download Highlights.mp4."
     )
 
 

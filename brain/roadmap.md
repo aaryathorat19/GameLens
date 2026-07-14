@@ -9,7 +9,7 @@ Each row is one reviewable commit. Do not combine milestones without an explicit
 | 3 | `feat: detect audio highlight candidates` | Energy/loudness analysis and tested timestamp candidates. Done. |
 | 4 | `feat: refine candidates with scene detection` | PySceneDetect boundaries and clip-window selection. Done. |
 | 5 | `feat: generate downloadable highlight video` | Clip extraction, merge, progress/error UI, output artifact. Done. |
-| 6 | `feat: add highlight controls and preview` | Length profiles, filters, confidence, player/download. |
+| 6 | `feat: add highlight controls and preview` | Length profiles, confidence, player/download, and budgeted rendering. Done. |
 | 7 | `feat: add match statistics dashboard` | Provider interface, stats cards, event timeline. |
 | 8 | `feat: generate AI match summaries` | Summary service and safe failure/config states. |
 | 9 | `feat: add scoreboard OCR and replay detection` | Optional advanced-analysis services. |
