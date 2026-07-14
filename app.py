@@ -13,6 +13,7 @@ from modules.scene_refinement import (
 )
 from modules.video_upload import UploadValidationError, save_uploaded_video
 from services.audio_extractor import AudioExtractionError, extract_audio, ffmpeg_available
+from services.highlight_renderer import HighlightRenderError, render_highlights
 
 
 def main() -> None:
@@ -21,7 +22,7 @@ def main() -> None:
 
     st.title(APP_TITLE)
     st.caption(APP_TAGLINE)
-    st.info("Phase 4: refine high-energy moments to clean video-scene boundaries.")
+    st.info("Phase 5: generate a downloadable highlight video from refined match moments.")
 
     uploaded_video = st.file_uploader("Upload a match recording (MP4)", type=["mp4"])
     if uploaded_video is None:
@@ -100,12 +101,40 @@ def main() -> None:
             use_container_width=True,
             hide_index=True,
         )
+        if source_video and Path(source_video).is_file():
+            if st.button("Generate Highlights.mp4", type="primary"):
+                progress = st.progress(0, text="Preparing highlight clips...")
+
+                def update_progress(completed: int, total: int) -> None:
+                    progress.progress(completed / total, text=f"Rendering clip {completed} of {total}...")
+
+                try:
+                    output_path = render_highlights(
+                        Path(source_video), refined_candidates, progress_callback=update_progress
+                    )
+                    st.session_state["highlight_video"] = str(output_path)
+                    progress.progress(1.0, text="Highlights.mp4 is ready.")
+                except HighlightRenderError as error:
+                    progress.empty()
+                    st.error(str(error))
+
+    highlight_video = st.session_state.get("highlight_video")
+    if highlight_video and Path(highlight_video).is_file():
+        st.subheader("Generated highlights")
+        st.video(highlight_video)
+        with Path(highlight_video).open("rb") as video_file:
+            st.download_button(
+                "Download Highlights.mp4",
+                data=video_file.read(),
+                file_name="Highlights.mp4",
+                mime="video/mp4",
+            )
 
     st.subheader("How it will work")
     st.markdown(
         "1. Upload a full match recording.\n"
         "2. Prepare its audio track, rank high-energy moments, and align them to scenes.\n"
-        "3. Generate a highlight video in the next phase."
+        "3. Generate, preview, and download Highlights.mp4."
     )
 
 

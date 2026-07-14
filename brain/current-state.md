@@ -3,12 +3,12 @@
 ## System
 
 ```text
-Streamlit browser UI -> upload -> WAV -> audio candidate ranges
-                            -> modules.scene_refinement.detect_scene_windows()
-                            -> scene-aligned, merged clip windows
+Streamlit browser UI -> upload -> WAV -> audio candidates -> scene-aligned windows
+                            -> services.highlight_renderer.render_highlights()
+                            -> output/Highlights.mp4 -> player/download
 ```
 
-`app.py` renders upload, audio analysis, and scene refinement workflows and keeps paths/results in Streamlit session state. `modules/audio_highlights.py` reads PCM WAV audio, computes RMS energy windows, keeps top-percentile contiguous regions, and ranks them by peak relative energy. `modules/scene_refinement.py` detects content scenes via PySceneDetect, expands candidates to overlapping scene windows, then merges overlaps. `modules/video_upload.py` validates MP4 uploads and assigns generated names. `services/audio_extractor.py` calls FFmpeg to make mono 16 kHz WAV audio. `config.py` derives all paths from its own file location; no environment variables, network calls, database, users, routes, or background workers exist.
+`app.py` renders the pipeline and keeps paths/results in Streamlit session state. `modules/audio_highlights.py` computes RMS-energy candidates; `modules/scene_refinement.py` aligns and merges them with PySceneDetect scenes. `services/highlight_renderer.py` re-encodes each window with FFmpeg, concatenates normalized clips, and writes `output/Highlights.mp4`. `modules/video_upload.py` validates MP4 uploads and assigns generated names. `services/audio_extractor.py` makes mono 16 kHz WAV audio. No environment variables, network calls, database, users, routes, or background workers exist.
 
 ## Directory map
 
@@ -20,6 +20,7 @@ Streamlit browser UI -> upload -> WAV -> audio candidate ranges
 | `modules/audio_highlights.py` | RMS audio-energy candidate detection and scores. |
 | `modules/scene_refinement.py` | PySceneDetect scene windows and candidate alignment. |
 | `services/audio_extractor.py` | FFmpeg preflight and WAV extraction. |
+| `services/highlight_renderer.py` | FFmpeg clip extraction and `Highlights.mp4` rendering. |
 | `utils/` | Reserved for shared helpers. |
 | `input/` | User source videos at runtime; ignored by Git. |
 | `output/` | Generated artifacts at runtime; ignored by Git. |
@@ -38,7 +39,7 @@ Streamlit browser UI -> upload -> WAV -> audio candidate ranges
 
 ## Data and request flow
 
-No request/API/database flow exists. Current pipeline: MP4 upload -> persisted input -> WAV -> ranked audio candidates -> scene-aligned clip windows. Intended continuation: clip extraction -> `Highlights.mp4` -> dashboard/download.
+No request/API/database flow exists. Current pipeline: MP4 upload -> persisted input -> WAV -> audio candidates -> scene windows -> clips -> `Highlights.mp4` -> player/download. Intended continuation: user controls and match statistics.
 
 ## Security and performance
 
