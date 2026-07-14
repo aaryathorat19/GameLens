@@ -3,11 +3,13 @@
 ## System
 
 ```text
-Streamlit browser UI -> app.main() -> config.ensure_directories()
-                                     -> input/, output/, assets/
+Streamlit browser UI -> app.main() -> modules.video_upload.save_uploaded_video()
+                                     -> input/match_<uuid>.mp4
+                                     -> services.audio_extractor.extract_audio()
+                                     -> output/match_<uuid>_audio.wav
 ```
 
-`app.py` renders a static product shell and planned workflow. `config.py` derives all paths from its own file location; no environment variables, network calls, persistence, users, routes, or background workers exist.
+`app.py` renders the upload workflow and keeps source paths in Streamlit session state. `modules/video_upload.py` validates MP4 uploads and assigns generated names. `services/audio_extractor.py` calls FFmpeg to make mono 16 kHz WAV audio. `config.py` derives all paths from its own file location; no environment variables, network calls, database, users, routes, or background workers exist.
 
 ## Directory map
 
@@ -15,8 +17,8 @@ Streamlit browser UI -> app.main() -> config.ensure_directories()
 | --- | --- |
 | `app.py` | Streamlit entry point and UI composition. |
 | `config.py` | Project paths, UI identity, runtime-directory creation. |
-| `modules/` | Reserved for analysis/generation domain modules. |
-| `services/` | Reserved for external integrations, e.g. football APIs. |
+| `modules/video_upload.py` | MP4 validation and safe server-side upload storage. |
+| `services/audio_extractor.py` | FFmpeg preflight and WAV extraction. |
 | `utils/` | Reserved for shared helpers. |
 | `input/` | User source videos at runtime; ignored by Git. |
 | `output/` | Generated artifacts at runtime; ignored by Git. |
@@ -28,14 +30,14 @@ Streamlit browser UI -> app.main() -> config.ensure_directories()
 | Package | Intended role | Status |
 | --- | --- | --- |
 | Streamlit | Dashboard/UI | Used. |
-| MoviePy, FFmpeg | Clip extraction/merging | Planned. |
+| FFmpeg | Audio extraction now; clip extraction/merging later. |
 | librosa, NumPy, SciPy | Audio candidate detection | Planned. |
 | OpenCV, PySceneDetect | Scene analysis/refinement | Planned. |
 | pytest | Tests | Declared; not yet installed in the local environment. |
 
 ## Data and request flow
 
-No request/API/database flow exists. Intended pipeline: MP4 upload -> persisted input -> extracted audio -> candidate moments -> scene refinement -> clips -> `Highlights.mp4` -> dashboard/download.
+No request/API/database flow exists. Current pipeline: MP4 upload -> persisted input -> extracted WAV. Intended continuation: candidates -> scene refinement -> clips -> `Highlights.mp4` -> dashboard/download.
 
 ## Security and performance
 
